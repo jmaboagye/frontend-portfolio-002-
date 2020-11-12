@@ -1,8 +1,27 @@
+/*!
+ * jQuery JavaScript Library v1.12.4
+ * http://jquery.com/
+ *
+ * Includes Sizzle.js
+ * http://sizzlejs.com/
+ *
+ * Copyright jQuery Foundation and other contributors
+ * Released under the MIT license
+ * http://jquery.org/license
+ *
+ * Date: 2016-05-20T17:17Z
+ */
 
 (function( global, factory ) {
 
 	if ( typeof module === "object" && typeof module.exports === "object" ) {
-		
+		// For CommonJS and CommonJS-like environments where a proper `window`
+		// is present, execute the factory and get jQuery.
+		// For environments that do not have a `window` with a `document`
+		// (such as Node.js), expose a factory as module.exports.
+		// This accentuates the need for the creation of a real `window`.
+		// e.g. var jQuery = require("jquery")(window);
+		// See ticket #14549 for more info.
 		module.exports = global.document ?
 			factory( global, true ) :
 			function( w ) {
@@ -18,7 +37,11 @@
 // Pass this if window is not defined yet
 }(typeof window !== "undefined" ? window : this, function( window, noGlobal ) {
 
-
+// Support: Firefox 18+
+// Can't be in strict mode, several libs including ASP.NET trace
+// the stack via arguments.caller.callee and Firefox dies if
+// you try to trace through "use strict" call chains. (#13335)
+//"use strict";
 var deletedIds = [];
 
 var document = window.document;
@@ -1513,10 +1536,7 @@ Sizzle.uniqueSort = function( results ) {
 };
 
 /**
-
-	data: function( key, value ) {
-		var i, name, data,
-			elem = this[ * Utility function for retrieving the text value of an array of DOM nodes
+ * Utility function for retrieving the text value of an array of DOM nodes
  * @param {Array|Element} elem
  */
 getText = Sizzle.getText = function( elem ) {
@@ -4025,7 +4045,10 @@ jQuery.extend( {
 	}
 } );
 
-jQuery.fn.extend( { 0 ],
+jQuery.fn.extend( {
+	data: function( key, value ) {
+		var i, name, data,
+			elem = this[ 0 ],
 			attrs = elem && elem.attributes;
 
 		// Special expections of .data basically thwart jQuery.access,
@@ -6636,6 +6659,14 @@ var documentElement = document.documentElement;
 			div.removeChild( contents );
 		}
 
+		// Support: IE6-8
+		// First check that getClientRects works as expected
+		// Check if table cells still have offsetWidth/Height when they are set
+		// to display:none and there are still other visible table cells in a
+		// table row; if so, offsetWidth/Height are not reliable for use when
+		// determining if an element has been hidden directly using
+		// display:none (it is still safe to use offsets if a parent element is
+		// hidden; don safety goggles and see bug #4512 for more information).
 		div.style.display = "none";
 		reliableHiddenOffsetsVal = div.getClientRects().length === 0;
 		if ( reliableHiddenOffsetsVal ) {
@@ -7216,6 +7247,9 @@ if ( !support.opacity ) {
 					jQuery.trim( filter.replace( ralpha, "" ) ) === "" &&
 					style.removeAttribute ) {
 
+				// Setting style.filter to null, "" & " " still leave "filter:" in the cssText
+				// if "filter:" is present at all, clearType is disabled, we want to avoid this
+				// style.removeAttribute is IE Only, but so apparently is this code path...
 				style.removeAttribute( "filter" );
 
 				// if there is no filter style applied in a css rule
@@ -7400,6 +7434,10 @@ Tween.propHooks = {
 				return tween.elem[ tween.prop ];
 			}
 
+			// passing an empty string as a 3rd parameter to .css will automatically
+			// attempt a parseFloat and fallback to a string if the parse fails
+			// so, simple values such as "10px" are parsed to Float.
+			// complex values such as "rotate(1rad)" are returned as is.
 			result = jQuery.css( tween.elem, tween.prop, "" );
 
 			// Empty strings, null, undefined and "auto" are converted to 0.
@@ -7538,7 +7576,10 @@ function defaultPrefilter( elem, props, opts ) {
 	// height/width overflow pass
 	if ( elem.nodeType === 1 && ( "height" in props || "width" in props ) ) {
 
-		
+		// Make sure that nothing sneaks out
+		// Record all 3 overflow attributes because IE does not
+		// change the overflow attribute when overflowX and
+		// overflowY are set to the same value
 		opts.overflow = [ style.overflow, style.overflowX, style.overflowY ];
 
 		// Set display property to inline-block for height/width
@@ -8127,6 +8168,8 @@ jQuery.fn.delay = function( time, type ) {
 	// Tests for enctype support on a form (#6743)
 	support.enctype = !!document.createElement( "form" ).enctype;
 
+	// Make sure that the options inside disabled selects aren't marked as disabled
+	// (WebKit marks them as disabled)
 	select.disabled = true;
 	support.optDisabled = !opt.disabled;
 
@@ -8222,6 +8265,10 @@ jQuery.extend( {
 				return val != null ?
 					val :
 
+					// Support: IE10-11+
+					// option.text throws exceptions (#14686, #14858)
+					// Strip and collapse whitespace
+					// https://html.spec.whatwg.org/#strip-and-collapse-whitespace
 					jQuery.trim( jQuery.text( elem ) ).replace( rspaces, " " );
 			}
 		},
@@ -8278,6 +8325,10 @@ jQuery.extend( {
 
 					if ( jQuery.inArray( jQuery.valHooks.option.get( option ), values ) > -1 ) {
 
+						// Support: IE6
+						// When new option element is added to select box we need to
+						// force reflow of newly added node in order to workaround delay
+						// of initialization properties
 						try {
 							option.selected = optionSet = true;
 
@@ -8582,6 +8633,9 @@ if ( !support.style ) {
 	jQuery.attrHooks.style = {
 		get: function( elem ) {
 
+			// Return undefined in the case of empty string
+			// Note: IE uppercases css property names, but if we were to .toLowerCase()
+			// .cssText, that would destroy case sensitivity in URL's, like in "background"
 			return elem.style.cssText || undefined;
 		},
 		set: function( elem, value ) {
@@ -8651,6 +8705,10 @@ jQuery.extend( {
 		tabIndex: {
 			get: function( elem ) {
 
+				// elem.tabIndex doesn't always return the
+				// correct value when it hasn't been explicitly set
+				// http://fluidproject.org/blog/2008/01/09/getting-setting-and-removing-tabindex-values-with-javascript/
+				// Use proper attribute retrieval(#12072)
 				var tabindex = jQuery.find.attr( elem, "tabindex" );
 
 				return tabindex ?
@@ -8683,6 +8741,12 @@ if ( !support.hrefNormalized ) {
 	} );
 }
 
+// Support: Safari, IE9+
+// Accessing the selectedIndex property
+// forces the browser to respect setting selected
+// on the option
+// The getter ensures a default option is selected
+// when in an optgroup
 if ( !support.optSelected ) {
 	jQuery.propHooks.selected = {
 		get: function( elem ) {
@@ -8870,6 +8934,10 @@ jQuery.fn.extend( {
 					jQuery._data( this, "__className__", className );
 				}
 
+				// If the element has a class name or if we're passed "false",
+				// then remove the whole classname (if there was one, the above saved it).
+				// Otherwise bring back whatever was previously saved (if anything),
+				// falling back to the empty string if nothing was stored.
 				jQuery.attr( this, "class",
 					className || value === false ?
 					"" :
@@ -8964,7 +9032,10 @@ jQuery.parseJSON = function( data ) {
 		// Commas must not follow "[", "{", or ","
 		requireNonComma = open || comma;
 
-		
+		// Determine new depth
+		// array/object open ("[" or "{"): depth += true - false (increment)
+		// array/object close ("]" or "}"): depth += false - true (decrement)
+		// other cases ("," or primitive): depth += true - true (numeric cast)
 		depth += !close - !open;
 
 		// Remove this token
@@ -9013,9 +9084,22 @@ var
 	rprotocol = /^\/\//,
 	rurl = /^([\w.+-]+:)(?:\/\/(?:[^\/?#]*@|)([^\/?#:]*)(?::(\d+)|)|)/,
 
-	
+	/* Prefilters
+	 * 1) They are useful to introduce custom dataTypes (see ajax/jsonp.js for an example)
+	 * 2) These are called:
+	 *    - BEFORE asking for a transport
+	 *    - AFTER param serialization (s.data is a string if s.processData is true)
+	 * 3) key is the dataType
+	 * 4) the catchall symbol "*" can be used
+	 * 5) execution will start with transport dataType and THEN continue down to "*" if needed
+	 */
 	prefilters = {},
 
+	/* Transports bindings
+	 * 1) key is the dataType
+	 * 2) the catchall symbol "*" can be used
+	 * 3) selection will start with transport dataType and THEN go to "*" if needed
+	 */
 	transports = {},
 
 	// Avoid comment-prolog char sequence (#10098); must appease lint and evade compression
@@ -9281,6 +9365,17 @@ jQuery.extend( {
 		processData: true,
 		async: true,
 		contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+		/*
+		timeout: 0,
+		data: null,
+		dataType: null,
+		username: null,
+		password: null,
+		cache: null,
+		throws: false,
+		traditional: false,
+		headers: {},
+		*/
 
 		accepts: {
 			"*": allTypes,
@@ -10038,6 +10133,9 @@ jQuery.fn.extend( {
 	}
 } );
 
+
+// Create the request object
+// (This is still attached to ajaxSettings for backward compatibility)
 jQuery.ajaxSettings.xhr = window.ActiveXObject !== undefined ?
 
 	// Support: IE6-IE8
@@ -10048,10 +10146,22 @@ jQuery.ajaxSettings.xhr = window.ActiveXObject !== undefined ?
 			return createActiveXHR();
 		}
 
+		// Support: IE 9-11
+		// IE seems to error on cross-domain PATCH requests when ActiveX XHR
+		// is used. In IE 9+ always use the native XHR.
+		// Note: this condition won't catch Edge as it doesn't define
+		// document.documentMode but it also doesn't support ActiveX so it won't
+		// reach this code.
 		if ( document.documentMode > 8 ) {
 			return createStandardXHR();
 		}
 
+		// Support: IE<9
+		// oldIE XHR does not support non-RFC2616 methods (#13240)
+		// See http://msdn.microsoft.com/en-us/library/ie/ms536648(v=vs.85).aspx
+		// and http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9
+		// Although this check for six methods instead of eight
+		// since IE also does not support "trace" and "connect"
 		return /^(get|post|head|put|delete|options)$/i.test( this.type ) &&
 			createStandardXHR() || createActiveXHR();
 	} :
@@ -10115,6 +10225,11 @@ if ( xhrSupported ) {
 						xhr.overrideMimeType( options.mimeType );
 					}
 
+					// X-Requested-With header
+					// For cross-domain requests, seeing as conditions for a preflight are
+					// akin to a jigsaw puzzle, we simply never set it to be sure.
+					// (it can always be set on a per-request basis or even using ajaxSetup)
+					// For same-domain requests, won't change header if already provided.
 					if ( !options.crossDomain && !headers[ "X-Requested-With" ] ) {
 						headers[ "X-Requested-With" ] = "XMLHttpRequest";
 					}
@@ -10176,7 +10291,11 @@ if ( xhrSupported ) {
 									statusText = "";
 								}
 
-							
+								// Filter status for non standard behaviors
+
+								// If the request is local and we have data: assume a success
+								// (success with no data won't get notified, that's the best we
+								// can do given current implementations)
 								if ( !status && options.isLocal && !options.crossDomain ) {
 									status = responses.text ? 200 : 404;
 
@@ -10422,6 +10541,13 @@ jQuery.ajaxPrefilter( "json jsonp", function( s, originalSettings, jqXHR ) {
 	}
 } );
 
+
+
+
+// data: string of html
+// context (optional): If specified, the fragment will be created in this context,
+// defaults to document
+// keepScripts (optional): If true, will include scripts passed in the html string
 jQuery.parseHTML = function( data, context, keepScripts ) {
 	if ( !data || typeof data !== "string" ) {
 		return null;
@@ -10507,6 +10633,9 @@ jQuery.fn.load = function( url, params, callback ) {
 				// Otherwise use the full result
 				responseText );
 
+		// If the request succeeds, this function gets "data", "status", "jqXHR"
+		// but they are ignored because response was set above.
+		// If it fails, this function gets "jqXHR", "status", "error"
 		} ).always( callback && function( jqXHR, status ) {
 			self.each( function() {
 				callback.apply( this, response || [ jqXHR.responseText, status, jqXHR ] );
@@ -10634,6 +10763,8 @@ jQuery.fn.extend( {
 			return box;
 		}
 
+		// If we don't have gBCR, just use 0,0 rather than error
+		// BlackBerry 5, iOS 3 (original iPhone)
 		if ( typeof elem.getBoundingClientRect !== "undefined" ) {
 			box = elem.getBoundingClientRect();
 		}
@@ -10675,6 +10806,9 @@ jQuery.fn.extend( {
 			parentOffset.left += jQuery.css( offsetParent[ 0 ], "borderLeftWidth", true );
 		}
 
+		// Subtract parent offsets and element margins
+		// note: when an element has margin: auto the offsetLeft and marginLeft
+		// are the same in Safari causing offset.left to incorrectly be 0
 		return {
 			top:  offset.top  - parentOffset.top - jQuery.css( elem, "marginTop", true ),
 			left: offset.left - parentOffset.left - jQuery.css( elem, "marginLeft", true )
@@ -10721,6 +10855,11 @@ jQuery.each( { scrollLeft: "pageXOffset", scrollTop: "pageYOffset" }, function( 
 	};
 } );
 
+// Support: Safari<7-8+, Chrome<37-44+
+// Add the top/left cssHooks using jQuery.fn.position
+// Webkit bug: https://bugs.webkit.org/show_bug.cgi?id=29084
+// getComputedStyle returns percent when specified for top/left/bottom/right
+// rather than make the css module depend on the offset module, we just check for it here
 jQuery.each( [ "top", "left" ], function( i, prop ) {
 	jQuery.cssHooks[ prop ] = addGetHookIf( support.pixelPosition,
 		function( elem, computed ) {
@@ -10752,6 +10891,9 @@ jQuery.each( { Height: "height", Width: "width" }, function( name, type ) {
 
 				if ( jQuery.isWindow( elem ) ) {
 
+					// As of 5/8/2012 this will yield incorrect results for Mobile Safari, but there
+					// isn't a whole lot we can do. See pull request at this URL for discussion:
+					// https://github.com/jquery/jquery/pull/764
 					return elem.document.documentElement[ "client" + name ];
 				}
 
@@ -10759,6 +10901,10 @@ jQuery.each( { Height: "height", Width: "width" }, function( name, type ) {
 				if ( elem.nodeType === 9 ) {
 					doc = elem.documentElement;
 
+					// Either scroll[Width/Height] or offset[Width/Height] or client[Width/Height],
+					// whichever is greatest
+					// unfortunately, this causes bug #3838 in IE6/8 only,
+					// but there is currently no good, small way to fix it.
 					return Math.max(
 						elem.body[ "scroll" + name ], doc[ "scroll" + name ],
 						elem.body[ "offset" + name ], doc[ "offset" + name ],
@@ -10800,6 +10946,7 @@ jQuery.fn.extend( {
 	}
 } );
 
+// The number of elements contained in the matched element set
 jQuery.fn.size = function() {
 	return this.length;
 };
@@ -10807,6 +10954,20 @@ jQuery.fn.size = function() {
 jQuery.fn.andSelf = jQuery.fn.addBack;
 
 
+
+
+// Register as a named AMD module, since jQuery can be concatenated with other
+// files that may use define, but not via a proper concatenation script that
+// understands anonymous AMD modules. A named AMD is safest and most robust
+// way to register. Lowercase jquery is used because AMD module names are
+// derived from file names, and jQuery is normally delivered in a lowercase
+// file name. Do this after creating the global so that if an AMD module wants
+// to call noConflict to hide this version of jQuery, it will work.
+
+// Note that for maximum portability, libraries that are not jQuery should
+// declare themselves as anonymous modules, and avoid setting a global if an
+// AMD loader is present. jQuery is a special case. For more information, see
+// https://github.com/jrburke/requirejs/wiki/Updating-existing-libraries#wiki-anon
 
 if ( typeof define === "function" && define.amd ) {
 	define( "jquery", [], function() {
@@ -10836,7 +10997,9 @@ jQuery.noConflict = function( deep ) {
 	return jQuery;
 };
 
-
+// Expose jQuery and $ identifiers, even in
+// AMD (#7102#comment:10, https://github.com/jquery/jquery/pull/557)
+// and CommonJS for browser emulators (#13566)
 if ( !noGlobal ) {
 	window.jQuery = window.$ = jQuery;
 }
