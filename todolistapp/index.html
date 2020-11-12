@@ -63,7 +63,7 @@
         <script>
             $(document).ready(function(){
                 $("input[type=checkbox]").removeAttr("checked");
-                $("#project").tabs();
+                $("#projects").tabs();
                 $("ul").sortable({axis:"x", containment:"#projects"});
                 $("ol").sortable({axis:"y", containment:"#projects"});
                 $("#projects").on("click", "input[type=checkbox]", function(){
